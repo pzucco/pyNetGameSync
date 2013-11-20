@@ -5,4 +5,4 @@ A python library for network games. It's meant to facilitate synchronization of 
 
 It uses a fast custom-built (reliable) UDP protocol.
 
-Take a loot at "\_example_Syncer" and everything will be awnsered.
+Take a loot at "\_example_Syncer.py" and everything will be awnsered.
