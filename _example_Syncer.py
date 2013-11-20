@@ -26,7 +26,8 @@ else:
 
 import struct
 
-@UID_register_class
+                    #    This is very important. It tells the mananger that this
+@UID_register_class # <- class will have its instances synced.
 class Circle(object):
 
     # Let's define a Circle class. Circles are simple objects with only three
@@ -54,6 +55,10 @@ class Circle(object):
     def set_data(self, data, offset, conn):
         self.pos[0], self.pos[1], self.spd[0], self.spd[1], self.color = struct.unpack_from("!4fi", data, offset)
         return offset + struct.calcsize("!4fi")
+        #
+        # OBS: One can use conn["rtt"] to acknowledge the network latency. With
+        #      this info it's possible to predict preciselly where the object
+        #      might be on the server, independently from the latency.
 
     
     # is_feed_to(conn) method returns if this object should send updates to the
@@ -106,18 +111,25 @@ while 1:
                 spd=list((random.random()*2, random.random()*2)),
                 color=255,
             )
-            UID_register(instance)
+            UID_register(instance) # <- This is important. This must be executed
+                                   #    in order to make the instance synced.
 
         for circle in Circle.INSTANCES.itervalues():
             if circle.color == 255:
                 circle.color = 0
-                syncer.feed(circle)
+                syncer.feed(circle) # <- This is important. It tells that this
+                                    #    instance must send a sync feed to
+                                    #    synchronize all the clients...
+                                    #    It is normally done periodically as
+                                    #    also when object suffers an unexpected
+                                    #    modification.
 
     else:
         
         if not len(syncer.connections): exit()
  
-    for circle in Circle.INSTANCES.itervalues():
+    for circle in Circle.INSTANCES.itervalues(): # <- We can pick all synced
+                                                 #    instances with this
         circle.color += 1
         circle.color = min(255, circle.color)
         circle.pos[0] += circle.spd[0]
@@ -128,7 +140,8 @@ while 1:
         if circle.pos[1] > 480: circle.spd[1] = -abs(circle.spd[1])
         pygame.draw.circle(screen, (255 - circle.color, 0, circle.color), (int(circle.pos[0]), int(circle.pos[1])), 20)
         
-    syncer.process()
+    syncer.process() # Finally, we handle control to the Syncer to do the magic.
+                     # Messages are sent, received, and such.
  
     time.sleep(0.02)
     pygame.display.flip()
